@@ -1,4 +1,5 @@
 import requests
+import customtkinter as ctk
 from PIL import Image, ImageTk
 from io import BytesIO
 
@@ -18,3 +19,17 @@ def get_favicon(url):
     except Exception as e:
         print(f"Error fetching favicon: {e}")
         return None
+    
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
+
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        # Configure the window
+        self.title("Focus Mode")
+        self.geometry("500x700")
+        self.mainloop()
+if __name__ == "__main__":
+    app = App()
