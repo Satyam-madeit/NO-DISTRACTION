@@ -36,12 +36,21 @@ class App(ctk.CTk):
         self.title_label.pack(side="left", padx=10, pady=10)
         self.top_switch = ctk.CTkSwitch(self.top_frame, text="Enable Focus Mode", command=self.toggle_focus_mode)
         self.top_switch.pack(side="right", padx=10, pady=10)
+        self.scroll_frame = ctk.CTkScrollableFrame(self, label_text="Blocked Sites")
+        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.bottom_frame = ctk.CTkFrame(self)
+        self.bottom_frame.pack(fill="x", padx=20, pady=10)
+        self.site_entry = ctk.CTkEntry(self.bottom_frame, placeholder_text="Enter site url...")
+        self.site_entry.pack(side="left", fill="x", expand=True, padx=10, pady=10)
+        self.add_button = ctk.CTkButton(self.bottom_frame, text="Add", width=60, command=self.add_site)
+        self.add_button.pack(side="right", padx=10, pady=10)
         self.mainloop()
     
     def toggle_focus_mode(self):
         pass
-    
 
+    def add_site(self):
+        pass
 
 if __name__ == "__main__":
     app = App()
