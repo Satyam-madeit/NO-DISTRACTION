@@ -101,6 +101,7 @@ def toggle_site(data, url):
     save_json(data, "data.json")
     if data["master_on"]:
         block_all(data["sites"])
+        flush_dns()
 
 def add_site(data, url):
     if not any(site["url"] == url for site in data["sites"]):
