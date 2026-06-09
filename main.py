@@ -1,6 +1,6 @@
 import ctypes
 import sys
-import blocker
+from ui import App
 
 def is_admin():
     try:
@@ -8,19 +8,11 @@ def is_admin():
     except:
         return False
 
-def request_admin() -> bool:
-    if is_admin():
-        return True
-    else:
-        print("Requesting administrator privileges...")
-        ctypes.windll.shell32.ShellExecuteW(
-            None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-        return False
+def request_admin():
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    sys.exit()
 
 if __name__ == "__main__":
     if not is_admin():
-        if not request_admin():
-            print("Failed to obtain administrator privileges.")
-            sys.exit(1)
-    
-    data = blocker.load_json("data.json")
+        request_admin()
+    App()

@@ -1,8 +1,10 @@
 import requests
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw
 from io import BytesIO
 import blocker
+import pystray
+import threading
 
 favicon_cache = {} 
 
@@ -48,6 +50,7 @@ class App(ctk.CTk):
         self.add_button.pack(side="right", padx=10, pady=10)
         self.render_sites()
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.setup_tray()
         self.mainloop()
 
     def render_sites(self):
@@ -74,11 +77,36 @@ class App(ctk.CTk):
             delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red", 
                                        command=lambda u=site["url"]: self.delete_site(u))
             delete_btn.grid(row=0, column=3, padx=5, pady=5)
+    def setup_tray(self):
+        image = Image.new("RGB", (64, 64), color=(30, 30, 30))
+        draw = ImageDraw.Draw(image)
+        draw.ellipse([16, 16, 48, 48], fill=(0, 120, 255))
 
-    def on_close(self):
+        menu = pystray.Menu(
+            pystray.MenuItem("Show", self.show_window),
+            pystray.MenuItem("Exit", self.exit_app)
+        )
+        self.tray_icon = pystray.Icon("Focus Mode", image, "Focus Mode", menu)
+        threading.Thread(target=self.tray_icon.run, daemon=True).start()
+
+    def show_window(self, icon=None, item=None):
+        self.after(0, self._show_window)
+
+    def _show_window(self):
+        self.deiconify()
+        self.lift()
+
+    def exit_app(self, icon=None, item=None):
+        self.after(0, self._exit_app)
+
+    def _exit_app(self):
         if self.data["master_on"]:
             blocker.unblock_all()
+        self.tray_icon.stop()
         self.destroy()
+
+    def on_close(self):
+        self.withdraw()
 
     def toggle_focus_mode(self):
         blocker.toggle_master(self.data)
