@@ -30,6 +30,18 @@ class App(ctk.CTk):
         # Configure the window
         self.title("Focus Mode")
         self.geometry("500x700")
+        self.top_frame = ctk.CTkFrame(self)
+        self.top_frame.pack(fill="x", padx=20, pady=20)
+        self.title_label = ctk.CTkLabel(self.top_frame, text="🎯 Focus Mode")
+        self.title_label.pack(side="left", padx=10, pady=10)
+        self.top_switch = ctk.CTkSwitch(self.top_frame, text="Enable Focus Mode", command=self.toggle_focus_mode)
+        self.top_switch.pack(side="right", padx=10, pady=10)
         self.mainloop()
+    
+    def toggle_focus_mode(self):
+        pass
+    
+
+
 if __name__ == "__main__":
     app = App()
