@@ -2,7 +2,9 @@ import requests
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from io import BytesIO
-from blocker import load_json
+
+from streamlit import toggle
+from blocker import load_json, remove_site, toggle_site, add_site
 
 favicon_cache = {} 
 
@@ -64,6 +66,8 @@ class App(ctk.CTk):
 
             toggle = ctk.CTkSwitch(master=row_frame, text="",  
                                    command=lambda u=site["url"]: self.toggle_site(u))
+            if site["enabled"]:
+                toggle.select()
             toggle.grid(row=0, column=2, padx=5, pady=5)
 
             delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red", 
@@ -76,10 +80,17 @@ class App(ctk.CTk):
         pass
     
     def toggle_site(self, url):
-        pass
+        toggle_site(self.data, url)
+        self.refresh()
 
     def delete_site(self, url):
-        pass
-    
+        remove_site(self.data, url)
+        self.refresh()
+
+    def refresh(self):
+        for widget in self.scroll_frame.winfo_children():
+            widget.destroy()
+        self.render_sites()
+
 if __name__ == "__main__":
     app = App()
