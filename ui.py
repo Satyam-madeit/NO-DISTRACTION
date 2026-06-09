@@ -38,6 +38,8 @@ class App(ctk.CTk):
         self.top_switch.pack(side="right", padx=10, pady=10)
         self.scroll_frame = ctk.CTkScrollableFrame(self, label_text="Blocked Sites")
         self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.status_label = ctk.CTkLabel(self, text=" ", text_color="gray", height=30)
+        self.status_label.pack(pady=5)
         self.bottom_frame = ctk.CTkFrame(self)
         self.bottom_frame.pack(fill="x", padx=20, pady=10)
         self.site_entry = ctk.CTkEntry(self.bottom_frame, placeholder_text="Enter site url...")
@@ -45,6 +47,7 @@ class App(ctk.CTk):
         self.add_button = ctk.CTkButton(self.bottom_frame, text="Add", width=60, command=self.add_site)
         self.add_button.pack(side="right", padx=10, pady=10)
         self.render_sites()
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.mainloop()
 
     def render_sites(self):
@@ -71,12 +74,20 @@ class App(ctk.CTk):
             delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red", 
                                        command=lambda u=site["url"]: self.delete_site(u))
             delete_btn.grid(row=0, column=3, padx=5, pady=5)
+
+    def on_close(self):
+        if self.data["master_on"]:
+            blocker.unblock_all()
+        self.destroy()
+
     def toggle_focus_mode(self):
         blocker.toggle_master(self.data)
         if self.data["master_on"]:
             self.top_switch.select()
+            self.status_label.configure(text="⚠️ Restart your browser for changes to take effect", text_color="orange")
         else:
             self.top_switch.deselect()
+            self.status_label.configure(text="✅ Sites unblocked. Restart browser to restore access.", text_color="green")
 
     def add_site(self):
         url = self.site_entry.get().strip()

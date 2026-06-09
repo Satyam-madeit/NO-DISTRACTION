@@ -1,10 +1,17 @@
 import os
 import json
+import subprocess
 
 HOSTS_PATH = r"C:\Windows\System32\drivers\etc\hosts"
 MARKER_START = "# BLOCKER_START"
 MARKER_END = "# BLOCKER_END"
 
+def flush_dns():
+    print("flushing DNS...")
+    subprocess.run(["net", "stop", "dnscache"], capture_output=True, shell=True)
+    subprocess.run(["net", "start", "dnscache"], capture_output=True, shell=True)
+    print("DNS flushed")
+    
 def load_json(file_path):
     if not os.path.exists(file_path):
         return {"sites": [], "master_on": False} 
@@ -38,6 +45,7 @@ def block_all(sites):
 
     with open(HOSTS_PATH, 'w') as f:
         f.writelines(clean_lines + block_lines)
+    flush_dns()
 
 def unblock_all():
     with open(HOSTS_PATH, 'r') as f:
@@ -56,7 +64,8 @@ def unblock_all():
 
     with open(HOSTS_PATH, 'w') as f:
         f.writelines(clean_lines)
-
+    flush_dns()
+    
 def toggle_master(data):
     data["master_on"] = not data["master_on"]
     save_json(data, "data.json")

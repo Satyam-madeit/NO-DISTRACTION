@@ -10,10 +10,14 @@
     },
     {
       "url": "instagram.com",
-      "enabled": true
+      "enabled": false
     },
     {
-      "url": "pornhub.com",
+      "url": "facebook.com",
+      "enabled": false
+    },
+    {
+      "url": "reddit.com",
       "enabled": false
     }
   ],
