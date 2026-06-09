@@ -62,16 +62,24 @@ class App(ctk.CTk):
             site_label = ctk.CTkLabel(master=row_frame, text=site["url"])
             site_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-            toggle = ctk.CTkSwitch(master=row_frame, text="")
+            toggle = ctk.CTkSwitch(master=row_frame, text="",  
+                                   command=lambda u=site["url"]: self.toggle_site(u))
             toggle.grid(row=0, column=2, padx=5, pady=5)
 
-            delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red")
+            delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red", 
+                                       command=lambda u=site["url"]: self.delete_site(u))
             delete_btn.grid(row=0, column=3, padx=5, pady=5)
     def toggle_focus_mode(self):
         pass
 
     def add_site(self):
         pass
+    
+    def toggle_site(self, url):
+        pass
 
+    def delete_site(self, url):
+        pass
+    
 if __name__ == "__main__":
     app = App()
