@@ -6,15 +6,29 @@ HOSTS_PATH = r"C:\Windows\System32\drivers\etc\hosts"
 MARKER_START = "# BLOCKER_START"
 MARKER_END = "# BLOCKER_END"
 
+DEFAULT_SITES = [
+    {"url": "youtube.com", "enabled": False},
+    {"url": "instagram.com", "enabled": False},
+    {"url": "twitter.com", "enabled": False},
+    {"url": "facebook.com", "enabled": False},
+    {"url": "reddit.com", "enabled": False},
+    {"url": "netflix.com", "enabled": False},
+    {"url": "primevideo.com", "enabled": False},
+    {"url": "hotstar.com", "enabled": False},
+    {"url": "snapchat.com", "enabled": False},
+]
+
 def flush_dns():
     print("flushing DNS...")
     subprocess.run(["net", "stop", "dnscache"], capture_output=True, shell=True)
     subprocess.run(["net", "start", "dnscache"], capture_output=True, shell=True)
     print("DNS flushed")
-    
+
 def load_json(file_path):
     if not os.path.exists(file_path):
-        return {"sites": [], "master_on": False} 
+        default_data = {"sites": DEFAULT_SITES, "master_on": False}
+        save_json(default_data, file_path)
+        return default_data
     with open(file_path, 'r') as f:
         return json.load(f)
 
@@ -68,10 +82,15 @@ def unblock_all():
     
 def toggle_master(data):
     data["master_on"] = not data["master_on"]
-    save_json(data, "data.json")
     if data["master_on"]:
+        for site in data["sites"]:
+            site["enabled"] = True
+        save_json(data, "data.json")
         block_all(data["sites"])
     else:
+        for site in data["sites"]:
+            site["enabled"] = False 
+        save_json(data, "data.json")
         unblock_all()
 
 def toggle_site(data, url):

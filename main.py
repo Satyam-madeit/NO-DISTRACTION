@@ -1,6 +1,6 @@
 import ctypes
 import sys
-from blocker import load_json
+import blocker
 
 def is_admin():
     try:
@@ -23,4 +23,4 @@ if __name__ == "__main__":
             print("Failed to obtain administrator privileges.")
             sys.exit(1)
     
-    data = load_json("data.json")
+    data = blocker.load_json("data.json")

@@ -82,12 +82,14 @@ class App(ctk.CTk):
 
     def toggle_focus_mode(self):
         blocker.toggle_master(self.data)
+        print(self.data) 
         if self.data["master_on"]:
             self.top_switch.select()
             self.status_label.configure(text="⚠️ Restart your browser for changes to take effect", text_color="orange")
         else:
             self.top_switch.deselect()
             self.status_label.configure(text="✅ Sites unblocked. Restart browser to restore access.", text_color="green")
+        self.refresh()
 
     def add_site(self):
         url = self.site_entry.get().strip()
@@ -99,6 +101,7 @@ class App(ctk.CTk):
     def toggle_site(self, url):
         blocker.toggle_site(self.data, url)
         self.refresh()
+        self.status_label.configure(text="⚠️ Restart your browser for changes to take effect", text_color="orange")
 
     def delete_site(self, url):
         blocker.remove_site(self.data, url)
