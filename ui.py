@@ -3,6 +3,9 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 from io import BytesIO
 
+from streamlit import toggle
+from blocker import load_json
+
 favicon_cache = {} 
 
 def get_favicon(url):
@@ -26,8 +29,7 @@ ctk.set_default_color_theme("blue")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-
-        # Configure the window
+        self.data = load_json("data.json")
         self.title("Focus Mode")
         self.geometry("500x700")
         self.top_frame = ctk.CTkFrame(self)
@@ -44,8 +46,32 @@ class App(ctk.CTk):
         self.site_entry.pack(side="left", fill="x", expand=True, padx=10, pady=10)
         self.add_button = ctk.CTkButton(self.bottom_frame, text="Add", width=60, command=self.add_site)
         self.add_button.pack(side="right", padx=10, pady=10)
+        self.render_sites()
         self.mainloop()
-    
+
+    def render_sites(self):
+        for index, site in enumerate(self.data["sites"]):
+            
+            row_frame = ctk.CTkFrame(master=self.scroll_frame, fg_color="transparent")
+            row_frame.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
+            
+            row_frame.columnconfigure(0, weight=1) 
+
+            icon = get_favicon(site["url"])
+            favicon_label = ctk.CTkLabel(master=row_frame, text="", image=icon)
+            favicon_label.grid(row=0, column=0, padx=5, pady=5)
+
+            site_label = ctk.CTkLabel(master=row_frame, text=site["url"])
+            site_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+            user_label = ctk.CTkLabel(master=row_frame, text=site.get("username", ""))
+            user_label.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+
+            toggle = ctk.CTkSwitch(master=row_frame, text="")
+            toggle.grid(row=0, column=2, padx=5, pady=5)
+
+            delete_btn = ctk.CTkButton(master=row_frame, text="X", width=30, fg_color="red")
+            delete_btn.grid(row=0, column=3, padx=5, pady=5)
     def toggle_focus_mode(self):
         pass
 

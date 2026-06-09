@@ -1,0 +1,4 @@
+{
+  "sites": [{"url": "youtube.com", "enabled": true}],
+  "master_on": false
+}
