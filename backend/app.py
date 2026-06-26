@@ -23,11 +23,12 @@ def main():
     # 3. Create the window
     window = webview.create_window(
         title='Focus Mode',
-        html=dev_html,
-        js_api=api,          # This injects FocusApi into window.pywebview.api
-        width=900,
+        url=app_url,
+        js_api=api,
+        width=460,
         height=700,
-        resizable=True
+        resizable=True,       # Enabled resizing!
+        min_size=(400, 580)   # Floor limit to ensure UI remains perfectly readable
     )
 
     # 4. Start the application
