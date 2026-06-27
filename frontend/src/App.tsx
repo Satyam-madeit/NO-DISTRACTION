@@ -22,11 +22,24 @@ export default function App() {
   
   const toastIdCounter = useRef(0);
 
-  // Initialize data on load
+// Initialize data on load
   useEffect(() => {
-    backendAPI.getInitialState().then(setState);
-  }, []);
+    const loadInitialData = () => {
+      backendAPI.getInitialState().then((res: any) => {
+        if (res) setState(res);
+      });
+    };
 
+    if (window.pywebview) {
+      loadInitialData();
+    } else {
+      // Wait for Python to finish injecting the API bridge
+      window.addEventListener('pywebviewready', loadInitialData);
+    }
+
+    return () => window.removeEventListener('pywebviewready', loadInitialData);
+  }, []);
+  
   if (!state) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#10131b] text-white font-sans">

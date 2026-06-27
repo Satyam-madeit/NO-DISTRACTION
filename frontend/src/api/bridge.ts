@@ -8,14 +8,19 @@ declare global {
   }
 }
 
-export const backendAPI = window.pywebview?.api || new Proxy({}, {
-  get: () => () => {
-    console.warn("pywebview API is not initialized. Are you running inside the desktop window?");
-    return Promise.resolve();
+// Looks up the python API dynamically on invocation to beat race conditions
+export const backendAPI = new Proxy({}, {
+  get: (_target, prop) => {
+    return (...args: any[]) => {
+      if (window.pywebview?.api) {
+        return window.pywebview.api[prop as string](...args);
+      }
+      console.warn(`pywebview API not ready yet for method: ${String(prop)}`);
+      return Promise.resolve({ success: false });
+    };
   }
-}) as any; 
+}) as any;
 
-// Strictly mapping to your exact code properties
 export interface AppState {
   sites: Array<{
     url: string;
