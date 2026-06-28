@@ -6,3 +6,5 @@ dist
 assets/stitch.html
 build
 *.spec
+.cursor
+mcp.json
