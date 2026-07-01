@@ -1,6 +1,8 @@
 import json
 import os
+import subprocess
 import sys
+import ctypes
 
 import pystray
 import webview
@@ -26,6 +28,34 @@ def get_frontend_path():
 
 def get_icon_path():
     return os.path.join(get_base_path(), "assets", "icon.ico")
+
+
+def is_running_as_admin():
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except OSError:
+        return False
+
+
+def relaunch_as_admin():
+    if getattr(sys, "frozen", False):
+        executable = sys.executable
+        params = subprocess.list2cmdline(sys.argv[1:])
+        cwd = os.path.dirname(sys.executable)
+    else:
+        executable = sys.executable
+        params = subprocess.list2cmdline(["-m", "backend.app", *sys.argv[1:]])
+        cwd = get_base_path()
+
+    result = ctypes.windll.shell32.ShellExecuteW(
+        None,
+        "runas",
+        executable,
+        params,
+        cwd,
+        1,
+    )
+    return result > 32
 
 
 class FocusModeApp:
@@ -104,6 +134,10 @@ class FocusModeApp:
 
 
 def main():
+    if not is_running_as_admin():
+        relaunch_as_admin()
+        return
+
     app = FocusModeApp()
     app.create_window()
     app.create_tray_icon()

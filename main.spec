@@ -44,5 +44,6 @@ exe = EXE(
     runtime_tmpdir=None,
     console=False,          # no terminal window behind the app
     manifest='main.manifest',   # <-- this is what triggers the UAC prompt
+    uac_admin=True,
     icon='assets/icon.ico',
 )

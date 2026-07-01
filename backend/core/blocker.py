@@ -15,10 +15,12 @@ def apply_blocks(sites, master_on):
             
         clean_lines = []
         inside_block = False
+        found_block = False
         
         for line in lines:
             if MARKER_START.strip() in line:
                 inside_block = True
+                found_block = True
             elif MARKER_END.strip() in line:
                 inside_block = False
             elif not inside_block:
@@ -26,6 +28,9 @@ def apply_blocks(sites, master_on):
                 
         # If master is off, we just write the clean lines and exit
         if not master_on:
+            if not found_block:
+                return True
+
             with open(HOSTS_PATH, 'w') as f:
                 f.writelines(clean_lines)
             flush_dns()
