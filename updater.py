@@ -54,8 +54,13 @@ def check_for_update():
 
         assets = data.get("assets", [])
         exe_asset = next(
-            (a for a in assets if a["name"].lower().endswith(".exe")), None
+            (
+                a for a in assets
+                if a["name"] == "FocusMode.exe"
+            ),
+            None,
         )
+
         if not exe_asset:
             return None, None
 
