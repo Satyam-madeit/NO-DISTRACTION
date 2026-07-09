@@ -67,6 +67,7 @@ class FocusModeApp:
         self.tray_icon = None
         self.is_quitting = False
         self._pending_update_url = None
+        self.api.on_update_requested = self.start_update_from_frontend
 
     def create_window(self):
         # Added text_select=False and easy_drag=False to secure the UI,
@@ -145,16 +146,18 @@ class FocusModeApp:
     # ------------------------------------------------------------------
 
     def check_for_updates_on_startup(self):
-        """Silent, non-blocking check. Only notifies — doesn't auto-download,
-        so the user isn't surprised by a restart they didn't ask for."""
+        """Silent, non-blocking check. Shows the in-app banner (and a tray
+        notification as backup) — doesn't auto-download, so the user isn't
+        surprised by a restart they didn't ask for."""
         def _worker():
             latest_version, download_url = check_for_update()
             if latest_version:
                 self._pending_update_url = download_url
+                if self.window:
+                    self.window.evaluate_js(f"showUpdateBanner('{latest_version}')")
                 if self.tray_icon:
                     self.tray_icon.notify(
-                        f"Focus Mode {latest_version} is available. "
-                        f"Click 'Check for Updates' in the tray menu to install.",
+                        f"Focus Mode {latest_version} is available.",
                         title="Update available",
                     )
         threading.Thread(target=_worker, daemon=True).start()
@@ -185,6 +188,18 @@ class FocusModeApp:
             self._shutdown_and_apply_update(download_url)
 
         threading.Thread(target=_worker, daemon=True).start()
+
+    def start_update_from_frontend(self):
+        """Called via self.api.on_update_requested when the user clicks
+        'Update Now' in the app window."""
+        download_url = self._pending_update_url
+        if not download_url:
+            latest_version, download_url = check_for_update()
+            if not download_url:
+                return {"success": False, "error": "No update available"}
+
+        self._shutdown_and_apply_update(download_url)
+        return {"success": True}
 
     def _shutdown_and_apply_update(self, download_url):
         """Cleanly turns off hosts-file blocking and tears down the window/tray
