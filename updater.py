@@ -20,7 +20,7 @@ import subprocess
 import requests
 
 # ---- CONFIG: update these for your repo ----
-GITHUB_REPO = "Purple2Blue/NO-DISTRACTION"   # change to your actual repo path
+GITHUB_REPO = "Purple2Blue/focus-mode"   # change to your actual repo path
 CURRENT_VERSION = "2.0.0"                  # bump this every release
 # ---------------------------------------------
 
@@ -83,6 +83,14 @@ def download_and_apply_update(download_url: str, exe_name: str = "FocusMode.exe"
     that waits for this process to exit, swaps the files, relaunches the
     app, then deletes itself. Call sys.exit() / os._exit() right after this.
     """
+    if not getattr(sys, "frozen", False):
+        print(
+            "[updater] Refusing to run: this isn't a frozen PyInstaller build. "
+            "sys.executable would point to python.exe, not your app's exe. "
+            "Build with PyInstaller and test against dist/FocusMode.exe instead."
+        )
+        return
+
     current_exe = sys.executable  # path to the currently running exe
     app_dir = os.path.dirname(current_exe)
     new_exe_path = os.path.join(app_dir, "FocusMode_new.exe")
