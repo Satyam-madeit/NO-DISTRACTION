@@ -20,7 +20,7 @@ import subprocess
 import requests
 
 # ---- CONFIG: update these for your repo ----
-GITHUB_REPO = "Purple2Blue/focus-mode"   # change to your actual repo path
+GITHUB_REPO = "Purple2Blue/NO-DISTRACTION"   # change to your actual repo path
 CURRENT_VERSION = "2.0.0"                  # bump this every release
 # ---------------------------------------------
 
@@ -49,8 +49,6 @@ def check_for_update():
         if not latest_version or latest_version == current_version:
             return None, None
 
-        # simple string comparison works for x.y.z as long as you're consistent;
-        # for real semver comparison see the note at the bottom of this file
         if _version_tuple(latest_version) <= _version_tuple(current_version):
             return None, None
 
@@ -63,8 +61,7 @@ def check_for_update():
 
         return latest_version, exe_asset["browser_download_url"]
 
-    except Exception as e:
-        print(f"[updater] check failed: {e}")
+    except Exception:
         return None, None
 
 
@@ -84,26 +81,25 @@ def download_and_apply_update(download_url: str, exe_name: str = "FocusMode.exe"
     app, then deletes itself. Call sys.exit() / os._exit() right after this.
     """
     if not getattr(sys, "frozen", False):
-        print(
-            "[updater] Refusing to run: this isn't a frozen PyInstaller build. "
-            "sys.executable would point to python.exe, not your app's exe. "
-            "Build with PyInstaller and test against dist/FocusMode.exe instead."
-        )
         return
 
     current_exe = sys.executable  # path to the currently running exe
     app_dir = os.path.dirname(current_exe)
     new_exe_path = os.path.join(app_dir, "FocusMode_new.exe")
+    partial_exe_path = f"{new_exe_path}.download"
     bat_path = os.path.join(app_dir, "_update.bat")
 
-    print("[updater] downloading update...")
-    with requests.get(download_url, stream=True, timeout=30) as r:
+    with requests.get(download_url, stream=True, timeout=(10, 60)) as r:
         r.raise_for_status()
-        with open(new_exe_path, "wb") as f:
+        with open(partial_exe_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
+                if not chunk:
+                    continue
                 f.write(chunk)
+    os.replace(partial_exe_path, new_exe_path)
 
     bat_contents = f"""@echo off
+set PYINSTALLER_RESET_ENVIRONMENT=1
 :wait_loop
 tasklist /FI "IMAGENAME eq {exe_name}" 2>NUL | find /I "{exe_name}" >NUL
 if "%ERRORLEVEL%"=="0" (
@@ -118,13 +114,22 @@ del "%~f0"
     with open(bat_path, "w") as f:
         f.write(bat_contents)
 
+    update_env = os.environ.copy()
+    update_env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.kernel32.SetDllDirectoryW(None)
+
     # launch the updater script detached from this process, then exit
     subprocess.Popen(
         ["cmd", "/c", bat_path],
-        creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.DETACHED_PROCESS,
+        creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP,
         cwd=app_dir,
+        env=update_env,
+        close_fds=True,
     )
-    sys.exit(0)
+    os._exit(0)
 
 
 # NOTE on versioning:

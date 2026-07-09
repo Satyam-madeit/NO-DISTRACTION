@@ -150,61 +150,86 @@ class FocusModeApp:
         notification as backup) — doesn't auto-download, so the user isn't
         surprised by a restart they didn't ask for."""
         def _worker():
-            latest_version, download_url = check_for_update()
-            if latest_version:
-                self._pending_update_url = download_url
-                if self.window:
-                    self.window.evaluate_js(f"showUpdateBanner('{latest_version}')")
-                if self.tray_icon:
-                    self.tray_icon.notify(
-                        f"Focus Mode {latest_version} is available.",
-                        title="Update available",
-                    )
+            try:
+                latest_version, download_url = check_for_update()
+                if latest_version:
+                    self._pending_update_url = download_url
+                    if self.window:
+                        self.window.evaluate_js(f"showUpdateBanner('{latest_version}')")
+                    if self.tray_icon:
+                        try:
+                            self.tray_icon.notify(
+                                f"Focus Mode {latest_version} is available.",
+                                title="Update available",
+                            )
+                        except Exception:
+                            pass
+            except Exception:
+                pass
         threading.Thread(target=_worker, daemon=True).start()
 
     def on_check_for_updates_clicked(self, icon=None, item=None):
         """Manual check from the tray menu. This one does download + install,
         since clicking it is explicit user intent."""
         def _worker():
-            # reuse a pending url from the startup check if we already found one,
-            # otherwise check again in case the user hasn't restarted since then
-            download_url = self._pending_update_url
-            latest_version = None
-            if not download_url:
-                latest_version, download_url = check_for_update()
+            try:
+                # reuse a pending url from the startup check if we already found one,
+                # otherwise check again in case the user hasn't restarted since then
+                download_url = self._pending_update_url
+                latest_version = None
+                if not download_url:
+                    latest_version, download_url = check_for_update()
 
-            if not download_url:
+                if not download_url:
+                    if self.tray_icon:
+                        try:
+                            self.tray_icon.notify(
+                                "You're already on the latest version.", title="Focus Mode"
+                            )
+                        except Exception:
+                            pass
+                    return
+
                 if self.tray_icon:
-                    self.tray_icon.notify(
-                        "You're already on the latest version.", title="Focus Mode"
-                    )
-                return
-
-            if self.tray_icon:
-                self.tray_icon.notify(
-                    "Downloading update... Focus Mode will restart shortly.",
-                    title="Focus Mode",
-                )
-            self._shutdown_and_apply_update(download_url)
+                    try:
+                        self.tray_icon.notify(
+                            "Downloading update... Focus Mode will restart shortly.",
+                            title="Focus Mode",
+                        )
+                    except Exception:
+                        pass
+                self._shutdown_and_apply_update(download_url)
+            except Exception:
+                if self.tray_icon:
+                    try:
+                        self.tray_icon.notify(
+                            "Update failed. Please try again later.",
+                            title="Focus Mode",
+                        )
+                    except Exception:
+                        pass
 
         threading.Thread(target=_worker, daemon=True).start()
 
     def start_update_from_frontend(self):
         """Called via self.api.on_update_requested when the user clicks
         'Update Now' in the app window."""
-        download_url = self._pending_update_url
-        if not download_url:
-            latest_version, download_url = check_for_update()
+        try:
+            download_url = self._pending_update_url
             if not download_url:
-                return {"success": False, "error": "No update available"}
+                latest_version, download_url = check_for_update()
+                if not download_url:
+                    return {"success": False, "error": "No update available"}
 
-        self._shutdown_and_apply_update(download_url)
-        return {"success": True}
+            self._shutdown_and_apply_update(download_url)
+            return {"success": True}
+        except Exception:
+            self.is_quitting = False
+            return {"success": False, "error": "Update download failed. Please try again."}
 
     def _shutdown_and_apply_update(self, download_url):
-        """Cleanly turns off hosts-file blocking and tears down the window/tray
-        before swapping the exe, so we never leave the hosts file modified
-        mid-update."""
+        """Cleanly turns off hosts-file blocking, downloads the replacement exe,
+        then lets the updater process terminate and swap the app."""
         self.is_quitting = True
         result = self.api.turn_off_focus_mode()
         if not result["success"]:
@@ -217,11 +242,6 @@ class FocusModeApp:
                     title="Update failed",
                 )
             return
-
-        if self.window:
-            self.window.destroy()
-        if self.tray_icon:
-            self.tray_icon.stop()
 
         exe_name = os.path.basename(sys.executable)
         download_and_apply_update(download_url, exe_name=exe_name)
